@@ -11,11 +11,17 @@
  */
 package org.lunifera.runtime.web.gyrex.vaadin;
 
+import javax.servlet.Filter;
+
+import org.apache.shiro.web.servlet.IniShiroFilter;
 import org.eclipse.gyrex.context.IRuntimeContext;
 import org.eclipse.gyrex.http.application.Application;
 import org.eclipse.gyrex.http.application.context.IApplicationContext;
+import org.lunifera.runtime.web.gyrex.vaadin.internal.VaadinActivator;
 import org.lunifera.web.vaadin.servlet.VaadinOSGiServlet;
 import org.slf4j.LoggerFactory;
+
+import DefaultResourceProvider.VaadinResourceProvider;
 
 import com.vaadin.server.VaadinServlet;
 
@@ -26,6 +32,8 @@ import com.vaadin.server.VaadinServlet;
  * </p>
  */
 public class VaadinApplication extends Application {
+
+	private final String RESOURCE_BASE = "/VAADIN";
 
 	private static final org.slf4j.Logger LOG = LoggerFactory
 			.getLogger(VaadinApplication.class);
@@ -65,18 +73,29 @@ public class VaadinApplication extends Application {
 	 */
 	@Override
 	protected void doInit() throws IllegalStateException, Exception {
-		final VaadinOSGiServlet servlet = createVaadinServlet();
-		if (null == jaxRsApplication) {
+		final VaadinServlet servlet = createVaadinServlet();
+		if (null == servlet) {
 			throw new IllegalStateException(
-					"no application returned by createJaxRsApplication");
+					"no servlet returned by createVaadinServlet");
 		}
 
-		// install the SLF4J bridge if necessary
-		installSlf4jBridgeIfNecessary();
-
 		// register
-		getApplicationContext().registerServlet(getAlias(),
-				new ServletContainer(jaxRsApplication), null);
+		VaadinResourceProvider resourceProvider = new VaadinResourceProvider(
+				VaadinActivator.getInstance().getBundle());
+		getApplicationContext().registerResources(RESOURCE_BASE, RESOURCE_BASE,
+				resourceProvider);
+		getApplicationContext().registerServlet(getAlias(), servlet, null);
+		getApplicationContext().registerFilter(getAlias(), getSecurityFilter(),
+				null);
+	}
+
+	/**
+	 * Creates a new instance of the shiro security filter.
+	 * 
+	 * @return
+	 */
+	protected Filter getSecurityFilter() {
+		return new IniShiroFilter();
 	}
 
 	/**

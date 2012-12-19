@@ -18,10 +18,9 @@ import org.eclipse.gyrex.context.IRuntimeContext;
 import org.eclipse.gyrex.http.application.Application;
 import org.eclipse.gyrex.http.application.context.IApplicationContext;
 import org.lunifera.runtime.web.gyrex.vaadin.internal.VaadinActivator;
+import org.lunifera.runtime.web.gyrex.vaadin.internal.VaadinResourceProvider;
 import org.lunifera.web.vaadin.servlet.VaadinOSGiServlet;
 import org.slf4j.LoggerFactory;
-
-import DefaultResourceProvider.VaadinResourceProvider;
 
 import com.vaadin.server.VaadinServlet;
 
@@ -54,7 +53,7 @@ public class VaadinApplication extends Application {
 	 * @return the vaadin servlet object (must not be <code>null</code>)
 	 */
 	protected VaadinServlet createVaadinServlet() {
-		return new VaadinOSGiServlet(null, null);
+		return new VaadinOSGiServlet();
 	}
 
 	/**
@@ -82,11 +81,12 @@ public class VaadinApplication extends Application {
 		// register
 		VaadinResourceProvider resourceProvider = new VaadinResourceProvider(
 				VaadinActivator.getInstance().getBundle());
+		getApplicationContext().registerServlet(getAlias(), servlet, null);
+		// getApplicationContext().registerFilter(getAlias(),
+		// getSecurityFilter(),
+		// null);
 		getApplicationContext().registerResources(RESOURCE_BASE, RESOURCE_BASE,
 				resourceProvider);
-		getApplicationContext().registerServlet(getAlias(), servlet, null);
-		getApplicationContext().registerFilter(getAlias(), getSecurityFilter(),
-				null);
 	}
 
 	/**

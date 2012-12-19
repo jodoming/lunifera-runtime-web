@@ -17,17 +17,11 @@
  *******************************************************************************/
 package org.lunifera.web.vaadin;
 
-import org.eclipse.equinox.http.jetty.JettyConstants;
-import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
-import org.osgi.framework.BundleException;
-import org.osgi.framework.FrameworkUtil;
 import org.osgi.framework.ServiceReference;
 import org.osgi.service.component.ComponentFactory;
 import org.osgi.service.log.LogService;
-
-import com.vaadin.server.VaadinServiceSession;
 
 /**
  * Activator for this bundle which opens a service vaadinAppTracker which looks
@@ -53,13 +47,18 @@ import com.vaadin.server.VaadinServiceSession;
  *         Shiro Security Framework.
  */
 public class Activator implements BundleActivator {
-
-	private VaadinSessionTracker vaadinAppTracker;
 	private LogService logService;
-	private Bundle jettyBundle;
-	private Bundle vaadinBundle;
 
+	private static Activator singletonInstance;
 	protected static BundleContext bundleContext;
+
+	public static BundleContext getBundleContext() {
+		return bundleContext;
+	}
+
+	public static Activator getInstance() {
+		return singletonInstance;
+	}
 
 	protected void bindLogService(BundleContext context) {
 		ServiceReference<LogService> ref = context
@@ -69,7 +68,7 @@ public class Activator implements BundleActivator {
 		logService.log(LogService.LOG_DEBUG, "Binded LogService.");
 	}
 
-	protected LogService getLogService() {
+	public LogService getLogService() {
 		return logService;
 	}
 
@@ -77,63 +76,17 @@ public class Activator implements BundleActivator {
 	public void start(BundleContext context) throws Exception {
 
 		bundleContext = context;
+		singletonInstance = this;
 
 		// bind the log service
 		bindLogService(context);
 
-		// start the jetty with data from CM
-		startJetty(context);
-
-		// start the Vaadin bundle
-		startVaadin(context);
-
-		// start the application tracker that will be waiting for a Vaadin
-		// application get registered.
-		vaadinAppTracker = new VaadinSessionTracker(context, logService);
-		vaadinAppTracker.open();
-	}
-
-	private void startJetty(BundleContext context) {
-
-		jettyBundle = FrameworkUtil.getBundle(JettyConstants.class);
-		if (jettyBundle == null) {
-			getLogService()
-					.log(LogService.LOG_ERROR,
-							"Bundle org.eclipse.equinox.http.jetty is not in target platform");
-		}
-
-	}
-
-	private void startVaadin(BundleContext context) {
-
-		vaadinBundle = FrameworkUtil.getBundle(VaadinServiceSession.class);
-		if (vaadinBundle == null) {
-			getLogService().log(LogService.LOG_ERROR,
-					"Bundle com.vaadin is not in target platform");
-		}
-
-		// vaadin bundle doesn't have auto-start, so need to start it
-		try {
-			vaadinBundle.start();
-		} catch (BundleException e) {
-			getLogService().log(LogService.LOG_ERROR,
-					"Bundle com.vaadin had error on start up.", e);
-		}
 	}
 
 	@Override
 	public void stop(BundleContext context) throws Exception {
-
-		vaadinAppTracker.close();
-
-		vaadinBundle.stop();
-
-		jettyBundle.stop();
-
-		vaadinAppTracker = null;
-		vaadinBundle = null;
-		jettyBundle = null;
 		logService = null;
+		singletonInstance = null;
 	}
 
 }

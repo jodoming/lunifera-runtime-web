@@ -19,23 +19,25 @@
 package org.lunifera.web.vaadin.servlet;
 
 import java.io.IOException;
-import java.util.Dictionary;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-import javax.servlet.http.HttpSessionEvent;
-import javax.servlet.http.HttpSessionListener;
 
-import org.icepush.servlet.MainServlet;
+import org.lunifera.web.vaadin.Activator;
+import org.lunifera.web.vaadin.Constants;
+import org.lunifera.web.vaadin.OSGiUIProvider;
+import org.lunifera.web.vaadin.common.OSGiUI;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.InvalidSyntaxException;
+import org.osgi.framework.ServiceReference;
 import org.osgi.service.component.ComponentFactory;
-import org.osgi.service.component.ComponentInstance;
-import org.vaadin.artur.icepush.ICEPush;
-import org.vaadin.artur.icepush.JavascriptProvider;
+import org.osgi.service.log.LogService;
+import org.osgi.util.tracker.ServiceTracker;
 
 import com.vaadin.server.DeploymentConfiguration;
 import com.vaadin.server.VaadinRequest;
@@ -48,21 +50,16 @@ import com.vaadin.server.VaadinSession;
  * 
  */
 @SuppressWarnings("rawtypes")
-public class VaadinOSGiServlet extends VaadinServlet implements
-		OSGiServletService.IVaadinSessionManager {
+public class VaadinOSGiServlet extends VaadinServlet {
 
 	private static final long serialVersionUID = 1L;
 
-	private final ComponentFactory factory;
-	private Set<VaadinSessionInfo> sessions = new HashSet<VaadinSessionInfo>();
-	private Dictionary properties;
+	// private MainServlet iCEPushServlet;
+	// private JavascriptProvider javascriptProvider;
 
-	private MainServlet iCEPushServlet;
-	private JavascriptProvider javascriptProvider;
+	private UiProviderTracker tracker;
 
-	public VaadinOSGiServlet(ComponentFactory factory, Dictionary properties) {
-		this.factory = factory;
-		this.properties = properties;
+	public VaadinOSGiServlet() {
 	}
 
 	@Override
@@ -79,131 +76,180 @@ public class VaadinOSGiServlet extends VaadinServlet implements
 			}
 		}
 
-		iCEPushServlet = new MainServlet(servletConfig.getServletContext());
-
 		try {
-			javascriptProvider = new JavascriptProvider(getServletContext()
-					.getContextPath());
-
-			ICEPush.setCodeJavascriptLocation(javascriptProvider
-					.getCodeLocation());
-		} catch (IOException e) {
-			throw new ServletException("Error initializing JavascriptProvider",
-					e);
+			tracker = new UiProviderTracker(Activator.getBundleContext(),
+					Activator.getInstance().getLogService());
+			tracker.open();
+		} catch (InvalidSyntaxException e) {
+			throw new ServletException(e);
 		}
+
+		// iCEPushServlet = new MainServlet(servletConfig.getServletContext());
+		//
+		// try {
+		// javascriptProvider = new JavascriptProvider(getServletContext()
+		// .getContextPath());
+		//
+		// ICEPush.setCodeJavascriptLocation(javascriptProvider
+		// .getCodeLocation());
+		// } catch (IOException e) {
+		// throw new ServletException("Error initializing JavascriptProvider",
+		// e);
+		// }
 	}
 
 	@Override
 	protected void service(HttpServletRequest request,
 			HttpServletResponse response) throws ServletException, IOException {
-		String pathInfo = request.getPathInfo();
-		if (pathInfo != null
-				&& pathInfo.equals("/" + javascriptProvider.getCodeName())) {
-			// Serve icepush.js
-			serveIcePushCode(request, response);
-			return;
-		}
-
-		if (request.getRequestURI().endsWith(".icepush")) {
-			// Push request
-			try {
-				iCEPushServlet.service(request, response);
-			} catch (ServletException e) {
-				throw e;
-			} catch (IOException e) {
-				throw e;
-			} catch (Exception e) {
-				throw new RuntimeException(e);
-			}
-		} else {
-			// Vaadin request
-			super.service(request, response);
-		}
+		// String pathInfo = request.getPathInfo();
+		// if (pathInfo != null
+		// && pathInfo.equals("/" + javascriptProvider.getCodeName())) {
+		// // Serve icepush.js
+		// serveIcePushCode(request, response);
+		// return;
+		// }
+		//
+		// if (request.getRequestURI().endsWith(".icepush")) {
+		// // Push request
+		// try {
+		// iCEPushServlet.service(request, response);
+		// } catch (ServletException e) {
+		// throw e;
+		// } catch (IOException e) {
+		// throw e;
+		// } catch (Exception e) {
+		// throw new RuntimeException(e);
+		// }
+		// } else {
+		// Vaadin request
+		super.service(request, response);
+		// }
 	}
 
-	private void serveIcePushCode(HttpServletRequest request,
-			HttpServletResponse response) throws IOException {
-
-		String icepushJavscript = javascriptProvider.getJavaScript();
-
-		response.setHeader("Content-Type", "text/javascript");
-		response.getOutputStream().write(icepushJavscript.getBytes());
-	}
+	// private void serveIcePushCode(HttpServletRequest request,
+	// HttpServletResponse response) throws IOException {
+	//
+	// String icepushJavscript = javascriptProvider.getJavaScript();
+	//
+	// response.setHeader("Content-Type", "text/javascript");
+	// response.getOutputStream().write(icepushJavscript.getBytes());
+	// }
 
 	@Override
 	protected OSGiServletService createServletService(
 			DeploymentConfiguration deploymentConfiguration) {
-		return new OSGiServletService(this, deploymentConfiguration, this);
-	}
-
-	@Override
-	public VaadinSession createVaadinSession(VaadinRequest request,
-			HttpServletRequest httpServletRequest) {
-
-		ComponentInstance instance = factory.newInstance(properties);
-		VaadinSession session = (VaadinSession) instance
-				.getInstance();
-		final VaadinSessionInfo info = new VaadinSessionInfo(instance,
-				httpServletRequest.getSession());
-
-		info.session.setAttribute(VaadinOSGiServlet.class.getName(),
-				new HttpSessionListener() {
+		OSGiServletService service = new OSGiServletService(this,
+				deploymentConfiguration,
+				new OSGiServletService.IVaadinSessionManager() {
 					@Override
-					public void sessionDestroyed(HttpSessionEvent arg0) {
-						info.dispose();
-					}
-
-					@Override
-					public void sessionCreated(HttpSessionEvent arg0) {
-
+					public VaadinSession createVaadinSession(
+							VaadinRequest request,
+							HttpServletRequest httpServletRequest) {
+						VaadinSession session = new VaadinSession(
+								request.getService());
+						for (UiProviderInfo info : tracker.getInfos()) {
+							session.addUIProvider(new OSGiUIProvider(info
+									.getFactory(), info.getProviderClass()));
+						}
+						return session;
 					}
 				});
-		System.out.println("Ready: " + info); //$NON-NLS-1$
-		return (VaadinSession) info.instance.getInstance();
+		return service;
 	}
 
 	@Override
 	public void destroy() {
 		super.destroy();
 
-		synchronized (this) {
-			HashSet<VaadinSessionInfo> sessions = new HashSet<VaadinSessionInfo>();
-			sessions.addAll(this.sessions);
-			this.sessions.clear();
-			for (VaadinSessionInfo info : sessions) {
-				info.dispose();
-			}
+		if (tracker != null) {
+			tracker.close();
+			tracker = null;
 		}
 
-		iCEPushServlet.shutdown();
+		// iCEPushServlet.shutdown();
 	}
 
-	/**
-	 * Track the component instance and session. If this is disposed the entire
-	 * associated http session is also disposed.
-	 */
-	class VaadinSessionInfo {
+	@SuppressWarnings("unchecked")
+	public class UiProviderTracker extends ServiceTracker {
 
-		final ComponentInstance instance;
-		final HttpSession session;
+		private final LogService logService;
+		private final Set<UiProviderInfo> infos = new HashSet<UiProviderInfo>();
 
-		public VaadinSessionInfo(ComponentInstance instance, HttpSession session) {
-			this.instance = instance;
-			this.session = session;
-			sessions.add(this);
+		public UiProviderTracker(BundleContext ctx, LogService logService)
+				throws InvalidSyntaxException {
+			super(ctx, ctx.createFilter("(component.factory="
+					+ Constants.OSGI_COMP_FACTORY__VAADIN_UI + "/*)"), null);
+			this.logService = logService;
 		}
 
-		public void dispose() {
-			VaadinSessionInfo app = (VaadinSessionInfo) instance.getInstance();
-			if (app != null) {
-				app.dispose();
+		public Set<UiProviderInfo> getInfos() {
+			return infos;
+		}
+
+		@Override
+		public Object addingService(ServiceReference reference) {
+			Object o = super.addingService(reference);
+
+			if (o instanceof ComponentFactory) {
+				ComponentFactory factory = (ComponentFactory) o;
+				String name = (String) reference
+						.getProperty("component.factory");
+				String className = name.substring(Constants.PREFIX__UI_CLASS
+						.length());
+				try {
+					Class<? extends OSGiUI> clazz = (Class<? extends OSGiUI>) reference
+							.getBundle().loadClass(className);
+
+					infos.add(new UiProviderInfo(factory, clazz));
+					logService.log(
+							LogService.LOG_INFO,
+							String.format("Added %s as UiProvider",
+									clazz.getName()));
+				} catch (ClassNotFoundException e) {
+					logService
+							.log(LogService.LOG_ERROR, "Exception occured", e);
+					throw new RuntimeException(e);
+				}
 			}
 
-			instance.dispose();
-
-			session.removeAttribute(VaadinOSGiServlet.class.getName());
-			sessions.remove(this);
+			return o;
 		}
+
+		@Override
+		public void removedService(ServiceReference reference, Object service) {
+			if (service instanceof ComponentFactory) {
+				ComponentFactory factory = (ComponentFactory) service;
+				for (Iterator<UiProviderInfo> iterator = infos.iterator(); iterator
+						.hasNext();) {
+					UiProviderInfo info = iterator.next();
+					if (info.getFactory() == factory) {
+						iterator.remove();
+						break;
+					}
+				}
+			}
+		}
+	}
+
+	public static class UiProviderInfo {
+		private final ComponentFactory factory;
+		private final Class<? extends OSGiUI> clazz;
+
+		public UiProviderInfo(ComponentFactory factory,
+				Class<? extends OSGiUI> clazz) {
+			super();
+			this.factory = factory;
+			this.clazz = clazz;
+		}
+
+		public ComponentFactory getFactory() {
+			return factory;
+		}
+
+		public Class<? extends OSGiUI> getProviderClass() {
+			return clazz;
+		}
+
 	}
 
 }

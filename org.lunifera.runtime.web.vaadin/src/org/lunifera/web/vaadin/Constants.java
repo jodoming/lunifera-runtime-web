@@ -12,12 +12,6 @@ package org.lunifera.web.vaadin;
 public class Constants {
 
 	/**
-	 * OSGi property component.factory for the vaadin session (vaadin
-	 * application in vaadin 7)
-	 */
-	public static final String OSGI_COMP_FACTORY__VAADIN_SESSION = "org.lunifera.web.vaadin.Session";
-
-	/**
 	 * OSGi property component.factory for the vaadin UI (tab sheet). The
 	 * vaadin.ui.class name is part of the factory name and putted after the /.
 	 * The class name is required for lazy loading issues.

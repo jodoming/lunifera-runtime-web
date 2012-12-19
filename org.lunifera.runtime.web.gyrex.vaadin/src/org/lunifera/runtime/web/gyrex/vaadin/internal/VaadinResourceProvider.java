@@ -1,4 +1,4 @@
-package DefaultResourceProvider;
+package org.lunifera.runtime.web.gyrex.vaadin.internal;
 
 import java.net.MalformedURLException;
 import java.net.URL;

@@ -6,13 +6,8 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  * 
- * Information:
- * 		Based on original sources of 
- * 				- org.vaadin.osgi.Activator from Chris Brind
- *				- com.c4biz.osgiutils.vaadin.equinox.shiro.Activator from Cristiano Gaviao
- *
  * Contributors:
- *    Florian Pirchner - migrated to vaadin 7 and copied into org.lunifera namespace
+ *    Florian Pirchner - initial API and implementation
  *    
  *******************************************************************************/
 package org.lunifera.runtime.web.gyrex.vaadin.internal;

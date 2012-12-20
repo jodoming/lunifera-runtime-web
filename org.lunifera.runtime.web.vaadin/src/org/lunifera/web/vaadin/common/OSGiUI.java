@@ -14,10 +14,12 @@ package org.lunifera.web.vaadin.common;
 
 import org.osgi.service.component.ComponentInstance;
 
+import com.vaadin.server.SessionDestroyEvent;
+import com.vaadin.server.SessionDestroyListener;
 import com.vaadin.ui.UI;
 
 @SuppressWarnings("serial")
-public abstract class OSGiUI extends UI {
+public abstract class OSGiUI extends UI implements SessionDestroyListener {
 
 	private ComponentInstance instance;
 
@@ -36,7 +38,20 @@ public abstract class OSGiUI extends UI {
 	}
 
 	@Override
+	public void attach() {
+		super.attach();
+
+		getSession().getService().addSessionDestroyListener(this);
+	}
+
+	public void sessionDestroy(SessionDestroyEvent event) {
+		dispose();
+	}
+
+	@Override
 	public void detach() {
+		getSession().getService().removeSessionDestroyListener(this);
+
 		super.detach();
 
 		dispose();

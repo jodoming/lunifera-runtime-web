@@ -10,9 +10,8 @@
  *    Florian Pirchner - initial API and implementation
  *    
  *******************************************************************************/
-package org.lunifera.web.vaadin;
+package org.lunifera.web.vaadin.common;
 
-import org.lunifera.web.vaadin.common.OSGiUI;
 import org.osgi.service.component.ComponentFactory;
 import org.osgi.service.component.ComponentInstance;
 

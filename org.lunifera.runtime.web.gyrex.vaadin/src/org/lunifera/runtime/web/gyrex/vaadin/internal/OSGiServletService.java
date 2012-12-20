@@ -10,7 +10,7 @@
  *    Florian Pirchner - initial API and implementation
  *    
  *******************************************************************************/
-package org.lunifera.web.vaadin.servlet;
+package org.lunifera.runtime.web.gyrex.vaadin.internal;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -24,28 +24,27 @@ import com.vaadin.server.VaadinSession;
 @SuppressWarnings("serial")
 public class OSGiServletService extends VaadinServletService {
 
-	private final IVaadinSessionManager sessionManager;
+	private final IVaadinSessionFactory factory;
 
 	public OSGiServletService(VaadinServlet servlet,
 			DeploymentConfiguration deploymentConfiguration,
-			IVaadinSessionManager sessionManager) {
+			IVaadinSessionFactory factory) {
 		super(servlet, deploymentConfiguration);
 
-		this.sessionManager = sessionManager;
+		this.factory = factory;
 	}
 
 	@Override
 	protected VaadinSession createVaadinSession(VaadinRequest request)
 			throws ServiceException {
-		return sessionManager.createVaadinSession(request,
+		return factory.createSession(request,
 				getCurrentServletRequest());
 	}
 
 	/**
-	 * Handles the lifecycle of vaadin sessions.<br>
-	 * Not intended to be subclassed!
+	 * Creates new instances of vaadin sessions.
 	 */
-	public interface IVaadinSessionManager {
+	public interface IVaadinSessionFactory {
 		/**
 		 * Returns a new instance of a vaadin session.
 		 * 
@@ -54,7 +53,7 @@ public class OSGiServletService extends VaadinServletService {
 		 * 
 		 * @return
 		 */
-		VaadinSession createVaadinSession(VaadinRequest request,
+		VaadinSession createSession(VaadinRequest request,
 				HttpServletRequest httpServletRequest);
 	}
 }

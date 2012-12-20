@@ -8,15 +8,13 @@
  * 
  * Information:
  * 		Based on original sources of 
- * 				- org.vaadin.osgi.VaadinOSGiServlet from Chris Brind
- *				- com.c4biz.osgiutils.vaadin.equinox.shiro.VaadinOSGiServlet from Cristiano Gaviao
  *				- org.vaadin.artur.icepush.ICEPushServlet from Arthur Signell
  *
  * Contributors:
- *    Florian Pirchner - migrated to vaadin 7 and copied into org.lunifera namespace
+ *    Florian Pirchner - implementation
  *    
  *******************************************************************************/
-package org.lunifera.web.vaadin.servlet;
+package org.lunifera.runtime.web.gyrex.vaadin.internal;
 
 import java.io.IOException;
 import java.util.HashSet;
@@ -28,16 +26,16 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.lunifera.web.vaadin.Activator;
-import org.lunifera.web.vaadin.Constants;
-import org.lunifera.web.vaadin.OSGiUIProvider;
+import org.lunifera.web.vaadin.common.Constants;
 import org.lunifera.web.vaadin.common.OSGiUI;
+import org.lunifera.web.vaadin.common.OSGiUIProvider;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceReference;
 import org.osgi.service.component.ComponentFactory;
-import org.osgi.service.log.LogService;
 import org.osgi.util.tracker.ServiceTracker;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.vaadin.server.DeploymentConfiguration;
 import com.vaadin.server.VaadinRequest;
@@ -77,8 +75,8 @@ public class VaadinOSGiServlet extends VaadinServlet {
 		}
 
 		try {
-			tracker = new UiProviderTracker(Activator.getBundleContext(),
-					Activator.getInstance().getLogService());
+			tracker = new UiProviderTracker(VaadinActivator.getInstance()
+					.getBundle().getBundleContext());
 			tracker.open();
 		} catch (InvalidSyntaxException e) {
 			throw new ServletException(e);
@@ -140,10 +138,9 @@ public class VaadinOSGiServlet extends VaadinServlet {
 			DeploymentConfiguration deploymentConfiguration) {
 		OSGiServletService service = new OSGiServletService(this,
 				deploymentConfiguration,
-				new OSGiServletService.IVaadinSessionManager() {
+				new OSGiServletService.IVaadinSessionFactory() {
 					@Override
-					public VaadinSession createVaadinSession(
-							VaadinRequest request,
+					public VaadinSession createSession(VaadinRequest request,
 							HttpServletRequest httpServletRequest) {
 						VaadinSession session = new VaadinSession(
 								request.getService());
@@ -172,14 +169,14 @@ public class VaadinOSGiServlet extends VaadinServlet {
 	@SuppressWarnings("unchecked")
 	public class UiProviderTracker extends ServiceTracker {
 
-		private final LogService logService;
+		private final Logger logger = LoggerFactory
+				.getLogger(UiProviderTracker.class);
 		private final Set<UiProviderInfo> infos = new HashSet<UiProviderInfo>();
 
-		public UiProviderTracker(BundleContext ctx, LogService logService)
+		public UiProviderTracker(BundleContext ctx)
 				throws InvalidSyntaxException {
 			super(ctx, ctx.createFilter("(component.factory="
 					+ Constants.OSGI_COMP_FACTORY__VAADIN_UI + "/*)"), null);
-			this.logService = logService;
 		}
 
 		public Set<UiProviderInfo> getInfos() {
@@ -201,13 +198,10 @@ public class VaadinOSGiServlet extends VaadinServlet {
 							.getBundle().loadClass(className);
 
 					infos.add(new UiProviderInfo(factory, clazz));
-					logService.log(
-							LogService.LOG_INFO,
-							String.format("Added %s as UiProvider",
-									clazz.getName()));
+					logger.info(String.format("Added %s as UiProvider",
+							clazz.getName()));
 				} catch (ClassNotFoundException e) {
-					logService
-							.log(LogService.LOG_ERROR, "Exception occured", e);
+					logger.error("{}", e);
 					throw new RuntimeException(e);
 				}
 			}

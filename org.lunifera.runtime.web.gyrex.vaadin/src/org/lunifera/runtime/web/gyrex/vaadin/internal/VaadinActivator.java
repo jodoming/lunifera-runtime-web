@@ -17,11 +17,7 @@
  *******************************************************************************/
 package org.lunifera.runtime.web.gyrex.vaadin.internal;
 
-import java.util.concurrent.atomic.AtomicReference;
-
 import org.eclipse.gyrex.common.runtime.BaseBundleActivator;
-import org.eclipse.gyrex.http.internal.HttpActivator;
-import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 
 public class VaadinActivator extends BaseBundleActivator {
@@ -30,7 +26,7 @@ public class VaadinActivator extends BaseBundleActivator {
 
 	/** the shared instance */
 	private static VaadinActivator sharedInstance;
-	
+
 	public VaadinActivator() {
 		super(SYMBOLIC_NAME);
 	}
@@ -43,11 +39,12 @@ public class VaadinActivator extends BaseBundleActivator {
 	public static VaadinActivator getInstance() throws IllegalStateException {
 		final VaadinActivator instance = sharedInstance;
 		if (null == instance) {
-			throw new IllegalStateException("Gyrex HTTP Core has not been started.");
+			throw new IllegalStateException(
+					"Gyrex HTTP Core has not been started.");
 		}
 		return instance;
 	}
-	
+
 	@Override
 	protected Class<?> getDebugOptions() {
 		return VaadinDebug.class;
@@ -56,15 +53,15 @@ public class VaadinActivator extends BaseBundleActivator {
 	@Override
 	protected void doStart(BundleContext context) throws Exception {
 		super.doStart(context);
-		
+
 		sharedInstance = this;
 	}
 
 	@Override
 	protected void doStop(BundleContext context) throws Exception {
 		super.doStop(context);
-	
+
 		sharedInstance = null;
 	}
-	
+
 }

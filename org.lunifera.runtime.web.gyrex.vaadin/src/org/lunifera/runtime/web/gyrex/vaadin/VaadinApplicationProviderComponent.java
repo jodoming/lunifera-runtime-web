@@ -16,7 +16,6 @@ import org.eclipse.gyrex.context.IRuntimeContext;
 import org.eclipse.gyrex.http.application.Application;
 import org.eclipse.gyrex.http.application.provider.ApplicationProvider;
 import org.lunifera.runtime.web.gyrex.vaadin.internal.VaadinDebug;
-import org.osgi.framework.BundleContext;
 import org.osgi.service.component.ComponentConstants;
 import org.osgi.service.component.ComponentContext;
 import org.slf4j.Logger;
@@ -45,8 +44,6 @@ public class VaadinApplicationProviderComponent extends ApplicationProvider {
 	 * {@link ComponentConstants#COMPONENT_NAME} property.
 	 */
 	public static final String APPLICATION_PROVIDER_ID = "applicationProviderId";
-
-	private BundleContext bundleContext;
 
 	public void activate(final ComponentContext context) {
 		if (VaadinDebug.debug) {
@@ -79,9 +76,6 @@ public class VaadinApplicationProviderComponent extends ApplicationProvider {
 								getId(), applicationProviderId), e);
 			}
 		}
-
-		// remember bundle for later use
-		bundleContext = context.getBundleContext();
 	}
 
 	@Override
@@ -99,7 +93,6 @@ public class VaadinApplicationProviderComponent extends ApplicationProvider {
 							ComponentConstants.COMPONENT_NAME), context
 							.getBundleContext().getBundle());
 		}
-		bundleContext = null;
 	}
 
 	private String getApplicationProviderId(final ComponentContext context) {

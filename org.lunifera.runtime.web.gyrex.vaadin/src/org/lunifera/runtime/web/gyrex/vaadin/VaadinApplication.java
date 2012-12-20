@@ -1,14 +1,15 @@
-/**
- * Copyright (c) 2012 AGETO Service GmbH and others.
- * All rights reserved.
- *
- * This program and the accompanying materials are made available under the terms of the
- * Eclipse Public License v1.0 which accompanies this distribution, and is available at
+/*******************************************************************************
+ * Copyright (c) 2012 by committers of lunifera.org
+ * 
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- *
+ * 
  * Contributors:
- *     Gunnar Wagenknecht - initial API and implementation
- */
+ *    Florian Pirchner - initial API and implementation
+ *    
+ *******************************************************************************/
 package org.lunifera.runtime.web.gyrex.vaadin;
 
 import javax.servlet.Filter;
@@ -18,8 +19,8 @@ import org.eclipse.gyrex.context.IRuntimeContext;
 import org.eclipse.gyrex.http.application.Application;
 import org.eclipse.gyrex.http.application.context.IApplicationContext;
 import org.lunifera.runtime.web.gyrex.vaadin.internal.VaadinActivator;
+import org.lunifera.runtime.web.gyrex.vaadin.internal.VaadinOSGiServlet;
 import org.lunifera.runtime.web.gyrex.vaadin.internal.VaadinResourceProvider;
-import org.lunifera.web.vaadin.servlet.VaadinOSGiServlet;
 import org.slf4j.LoggerFactory;
 
 import com.vaadin.server.VaadinServlet;
@@ -34,7 +35,7 @@ public class VaadinApplication extends Application {
 
 	private final String RESOURCE_BASE = "/VAADIN";
 
-	private static final org.slf4j.Logger LOG = LoggerFactory
+	private static final org.slf4j.Logger logger = LoggerFactory
 			.getLogger(VaadinApplication.class);
 
 	/**
@@ -79,12 +80,12 @@ public class VaadinApplication extends Application {
 		}
 
 		// register
+		logger.info("Application initialized");
 		VaadinResourceProvider resourceProvider = new VaadinResourceProvider(
 				VaadinActivator.getInstance().getBundle());
 		getApplicationContext().registerServlet(getAlias(), servlet, null);
-		// getApplicationContext().registerFilter(getAlias(),
-		// getSecurityFilter(),
-		// null);
+		getApplicationContext().registerFilter(getAlias(), getSecurityFilter(),
+				null);
 		getApplicationContext().registerResources(RESOURCE_BASE, RESOURCE_BASE,
 				resourceProvider);
 	}

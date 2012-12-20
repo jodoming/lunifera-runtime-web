@@ -7,7 +7,7 @@
  * http://www.eclipse.org/legal/epl-v10.html
  * 
  *******************************************************************************/
-package org.lunifera.web.vaadin;
+package org.lunifera.web.vaadin.common;
 
 public class Constants {
 
